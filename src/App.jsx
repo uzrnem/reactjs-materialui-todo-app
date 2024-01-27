@@ -176,7 +176,7 @@ export default function IconLabelButtons() {
                                 <DeleteIcon color="error" onClick={() => handleDeleteModalOpen(item)} />
                             </Stack>
                         </Stack>
-                    ) : <Typography sx={{m: '1em'}}>No Todo</Typography>
+                    ) : <Typography sx={{m: '1em'}}>No Todo Added..!</Typography>
                     
                 }
                 {
