@@ -1,8 +1,28 @@
 import { useState, useEffect } from 'react';
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import { Delete as DeleteIcon, CreateRounded as EditIcon, AddCircle } from '@mui/icons-material';
-import { Stack, Box, Container, Paper, InputBase, IconButton, 
+import { Stack, Box, Container, Paper, InputBase, IconButton, Snackbar, Alert, Slide,
     Dialog, DialogTitle, Typography, Button, TextField, Checkbox } from '@mui/material';
+
+const Notification = (props) => {
+    const { onClose, open, message } = props;
+
+    const vertical = 'bottom'
+    const horizontal = 'right'
+
+    return (
+    <Snackbar open={open} autoHideDuration={4000} onClose={() => onClose()}
+        TransitionComponent={Slide}
+        anchorOrigin={{ vertical, horizontal }}
+    > <Alert
+        onClose={() => onClose()}
+        severity={message.severity} // warning // error // success
+        variant="filled"
+        sx={{ width: '100%' }}
+        >{message.text}</Alert>
+    </Snackbar>
+    );
+}
 
 const DeleteDialog = ({ onClose, selectedValue, open }) => {
     return (
@@ -38,35 +58,8 @@ export default function IconLabelButtons() {
     const [openDeleteDialoge, setOpenDeleteDialoge] = useState(false);
     const [openEditDialoge, setOpenEditDialoge] = useState(false);
     const [currentTodo, setCurrentTodo] = useState(-1);
-
-    const saveTodo = async () => {
-        const response = await fetch("http://localhost:5000/todos", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({id: uuidv4(), isCompleted: false, name}),
-        });
-        setName("");
-        getTodos();
-    }
-
-    const editTodo = async (item, isCompleted, value) => {
-        if (isCompleted !== null) {
-            item.isCompleted = isCompleted;
-        }
-        if (value !== null) {
-            item.name = value;
-        }
-        const response = await fetch(`http://localhost:5000/todos/${item.id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({isCompleted: item.isCompleted, name: item.name}),
-        });
-        getTodos();
-    }
+    const [openAlert, setOpenAlert] = useState(false);
+    const [message, setMessage] = useState({ text: "", severity: "" });
 
     const handleEditModalOpen = (item) => {
         setCurrentTodo(item);
@@ -85,7 +78,48 @@ export default function IconLabelButtons() {
         setOpenEditDialoge(false);
         setCurrentTodo(null);
     }
-  
+
+    const handleAlertOpen = (severity, text) => {
+      setMessage({ text, severity })
+      setOpenAlert(true);
+    };
+
+    const handleAlertClose = (value) => {
+      setOpenAlert(false);
+      setMessage({ text: "", severity: "" })
+    };
+
+    const saveTodo = async () => {
+        const response = await fetch("http://localhost:5000/todos", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({id: uuidv4(), isCompleted: false, name}),
+        });
+        handleAlertOpen("success", "Added Successfully");
+        setName("");
+        getTodos();
+    }
+
+    const editTodo = async (item, isCompleted, value) => {
+        if (isCompleted !== null) {
+            item.isCompleted = isCompleted;
+        }
+        if (value !== null) {
+            item.name = value;
+        }
+        const response = await fetch(`http://localhost:5000/todos/${item.id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({isCompleted: item.isCompleted, name: item.name}),
+        });
+        handleAlertOpen("primary", "Updated Successfully");
+        getTodos();
+    }
+
     const handleDeleteModalClose = async (value) => {
         if (value && currentTodo !== null) {
             const response = await fetch(`http://localhost:5000/todos/${currentTodo.id}`, {
@@ -96,24 +130,25 @@ export default function IconLabelButtons() {
             });
             getTodos();
         }
+        handleAlertOpen("warning", "Deleted Successfully");
         setOpenDeleteDialoge(false);
         setCurrentTodo(null);
     };
 
+    const fetchTodos = async () => {
+        const response = await fetch("http://localhost:5000/todos");
+        return await response.json();
+    }
+
     const getTodos = async () => {
         const list = await fetchTodos();
         setList(list);
-    }
+        //handleAlertOpen("secondary", "Fetched Successfully");
+    };
 
     useEffect(() => {
         getTodos();
-    }, [])
-
-    const fetchTodos = async () => {
-        const response = await fetch("http://localhost:5000/todos");
-        const list = await response.json();
-        return list;
-    }
+    }, []);
 
     return (
         <Container maxWidth="sm">
@@ -157,6 +192,11 @@ export default function IconLabelButtons() {
                     )
                 }
             </Box>
+            <Notification
+                open={openAlert}
+                message={message}
+                onClose={handleAlertClose}
+            />
         </Container>
     );
 }
