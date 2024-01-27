@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  react:
+    image: node:21.6.0
+    container_name: reactjs
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - 3000:3000
+      - 5000:5000
+    command: tail -f /dev/null
+     
