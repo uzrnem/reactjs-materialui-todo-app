@@ -1,9 +1,28 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Delete as DeleteIcon, CreateRounded as EditIcon, AddCircle } from '@mui/icons-material';
-import { Stack, Box, Container, Paper, InputBase, IconButton,
+import { Stack, Box, Container, Paper, InputBase, IconButton, Snackbar, Alert, Slide,
     Dialog, DialogTitle, Typography, Button, TextField, Checkbox } from '@mui/material';
-import Notification from './utils/Notification';
+
+const Notification = (props) => {
+    const { onClose, open, message } = props;
+
+    const vertical = 'bottom'
+    const horizontal = 'right'
+
+    return (
+    <Snackbar open={open} autoHideDuration={4000} onClose={() => onClose()}
+        TransitionComponent={Slide}
+        anchorOrigin={{ vertical, horizontal }}
+    > <Alert
+        onClose={() => onClose()}
+        severity={message.severity} // warning // error // success
+        variant="filled"
+        sx={{ width: '100%' }}
+        >{message.text}</Alert>
+    </Snackbar>
+    );
+}
 
 const DeleteDialog = ({ onClose, selectedValue, open }) => {
     return (
@@ -39,7 +58,8 @@ export default function IconLabelButtons() {
     const [openDeleteDialoge, setOpenDeleteDialoge] = useState(false);
     const [openEditDialoge, setOpenEditDialoge] = useState(false);
     const [currentTodo, setCurrentTodo] = useState(-1);
-    const notificationRef = useRef();
+    const [openAlert, setOpenAlert] = useState(false);
+    const [message, setMessage] = useState({ text: "", severity: "" });
 
     const handleEditModalOpen = (item) => {
         setCurrentTodo(item);
@@ -60,7 +80,13 @@ export default function IconLabelButtons() {
     }
 
     const handleAlertOpen = (severity, text) => {
-        notificationRef.current.openPopup(severity, text)
+      setMessage({ text, severity })
+      setOpenAlert(true);
+    };
+
+    const handleAlertClose = (value) => {
+      setOpenAlert(false);
+      setMessage({ text: "", severity: "" })
     };
 
     const saveTodo = async () => {
@@ -166,7 +192,11 @@ export default function IconLabelButtons() {
                     )
                 }
             </Box>
-            <Notification ref={notificationRef} />
+            <Notification
+                open={openAlert}
+                message={message}
+                onClose={handleAlertClose}
+            />
         </Container>
     );
 }
